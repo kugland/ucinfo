@@ -1,0 +1,82 @@
+////////       This file is part of the source code for ucinfo, a CLI tool to show         ////////
+////////       information about Unicode characters.                                       ////////
+////////                                                                                   ////////
+////////       Copyright © 2024  André Kugland                                             ////////
+////////                                                                                   ////////
+////////       This program is free software: you can redistribute it and/or modify        ////////
+////////       it under the terms of the GNU General Public License as published by        ////////
+////////       the Free Software Foundation, either version 3 of the License, or           ////////
+////////       (at your option) any later version.                                         ////////
+////////                                                                                   ////////
+////////       This program is distributed in the hope that it will be useful,             ////////
+////////       but WITHOUT ANY WARRANTY; without even the implied warranty of              ////////
+////////       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                ////////
+////////       GNU General Public License for more details.                                ////////
+////////                                                                                   ////////
+////////       You should have received a copy of the GNU General Public License           ////////
+////////       along with this program. If not, see https://www.gnu.org/licenses/.         ////////
+
+/// Search for a glyph entry by its codepoint.
+///
+/// Returns a reference to a slice of bytes containing the raw bitmap, or `None` if the codepoint
+/// doesn’t exist in the font.
+pub(crate) fn find_entry(codepoint: u32) -> Option<&'static [u8]> {
+    find_entry_recursive(codepoint, UNIFONT_GLYPHS_8X16, 16)
+        .or_else(|| find_entry_recursive(codepoint, UNIFONT_GLYPHS_16X16, 32))
+}
+
+/// Recursive binary search for glyph entry in a font.
+fn find_entry_recursive(
+    codepoint: u32,
+    font: &'static [u8],
+    glyph_size: usize,
+) -> Option<&'static [u8]> {
+    let record_size = 4 + glyph_size;
+    let total_records = font.len() / record_size;
+    let index = total_records / 2 * record_size;
+    let code = u32::from_le_bytes(font[index..index + 4].try_into().unwrap());
+    if total_records == 1 && code != codepoint {
+        None
+    } else if code < codepoint {
+        find_entry_recursive(codepoint, &font[index..], glyph_size)
+    } else if code > codepoint {
+        find_entry_recursive(codepoint, &font[..index], glyph_size)
+    } else {
+        Some(&font[index + 4..index + 4 + glyph_size])
+    }
+}
+
+/// Version of the included Unifont font.
+pub const UNIFONT_VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/unifont_version.txt"));
+
+// These fonts are formatted as records of either 4 + 16 or 4 + 32 bytes, the first 4 being the
+// codepoint and the rest being the bitmap data. The records are sorted by codepoint, so we can
+// use binary search to find the bitmap for a given codepoint. All values are stored in
+// little-endian format.
+const UNIFONT_GLYPHS_8X16: &[u8] =
+    include_bytes!(concat!(env!("OUT_DIR"), "/unifont_glyphs_8x16.bin"));
+const UNIFONT_GLYPHS_16X16: &[u8] =
+    include_bytes!(concat!(env!("OUT_DIR"), "/unifont_glyphs_16x16.bin"));
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test_common::*;
+
+    #[test]
+    fn test_find_entry() {
+        assert_eq!(find_entry(0x20).unwrap(), &[0; 16],);
+        assert_eq!(find_entry(0x0061).unwrap(), LATIN_SMALL_LETTER_A,);
+        assert_eq!(find_entry(0x3000).unwrap(), &[0; 32],);
+        assert_eq!(find_entry(0x5186).unwrap(), CJK_UNIFIED_IDEOGRAPH_5186,);
+        assert!(find_entry(0x110000).is_none(),);
+    }
+
+    #[test]
+    fn test_font_record_size() {
+        // 4 bytes for codepoint + (8 columns * 16 rows) / 8 bits per byte = 20 bytes
+        assert!(UNIFONT_GLYPHS_8X16.len().is_multiple_of(20));
+        // 4 bytes for codepoint + (16 columns * 16 rows) / 8 bits per byte = 36 bytes
+        assert!(UNIFONT_GLYPHS_16X16.len().is_multiple_of(36));
+    }
+}
