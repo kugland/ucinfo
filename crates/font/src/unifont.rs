@@ -53,7 +53,7 @@ const UNIFONT_GLYPHS_16X16: (&[[u8; 36]], &[u8]) =
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_common::*;
+    use crate::test_consts::*;
 
     #[test]
     fn test_find_entry() {

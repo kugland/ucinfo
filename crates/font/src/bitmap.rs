@@ -54,7 +54,7 @@ impl Bitmap {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_common::*;
+    use crate::test_consts::*;
 
     #[test]
     fn test_bitmap_from_raw_data() {

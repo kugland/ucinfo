@@ -21,7 +21,7 @@ mod draw;
 mod unifont;
 
 #[cfg(test)]
-mod test_common;
+mod test_consts;
 
 pub use draw::DrawingMode;
 pub use unifont::UNIFONT_VERSION;
@@ -36,7 +36,7 @@ pub fn draw_glyph(codepoint: u32, mode: DrawingMode) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_common::*;
+    use crate::test_consts::*;
 
     // One final test to rule them all.
     #[test]

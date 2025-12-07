@@ -82,7 +82,7 @@ fn draw_blocks(bitmap: Bitmap) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_common::*;
+    use crate::test_consts::*;
 
     #[test]
     fn test_draw_simple() {
