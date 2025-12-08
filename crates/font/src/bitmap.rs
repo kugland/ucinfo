@@ -20,34 +20,25 @@
 pub(crate) struct Bitmap {
     pub width: usize,
     pub height: usize,
-    bits: Vec<bool>,
+    bits: &'static [u8],
 }
 
 impl Bitmap {
-    /// Create a new [Bitmap].
-    pub(crate) fn new(width: usize, height: usize, bits: Vec<bool>) -> Self {
+    /// Create a new [Bitmap] from raw byte data.
+    pub(crate) fn from_raw_data(bits: &'static [u8]) -> Self {
+        let (width, height) = (bits.len() / 2, 16);
         Self {
-            height,
             width,
+            height,
             bits,
         }
     }
 
-    /// Create a new [Bitmap] from raw byte data.
-    pub(crate) fn from_raw_data(raw: &[u8]) -> Self {
-        let (width, height) = (raw.len() / 2, 16);
-        let mut bits = Vec::with_capacity(width * height);
-        for byte in raw {
-            for bit in (0..8).rev() {
-                bits.push((byte & (1 << bit)) != 0);
-            }
-        }
-        Self::new(width, height, bits)
-    }
-
     /// Get the bit at the specified (x, y) coordinate.
-    pub(crate) fn get_pixel(&self, x: usize, y: usize) -> bool {
-        self.bits[y * self.width + x]
+    pub(crate) fn get_pixel(&self, x: usize, y: usize) -> u8 {
+        let idx = y * (self.width / 8) + (x / 8);
+        let bit = 7 - (x % 8);
+        (self.bits[idx] >> bit) & 1
     }
 }
 
@@ -57,48 +48,13 @@ mod tests {
     use crate::test_consts::*;
 
     #[test]
-    fn test_bitmap_from_raw_data() {
-        let (t, f) = (true, false);
-
-        let Bitmap {
-            width,
-            height,
-            bits,
-        } = Bitmap::from_raw_data(LATIN_SMALL_LETTER_A);
+    fn test_bitmap_dimensions() {
+        let Bitmap { width, height, .. } = Bitmap::from_raw_data(LATIN_SMALL_LETTER_A);
         assert_eq!(width, 8);
         assert_eq!(height, 16);
-        assert_eq!(
-            bits,
-            vec![
-                f, f, f, f, f, f, f, f, f, f, f, f, f, f, f, f, f, f, f, f, f, f, f, f, f, f, f, f,
-                f, f, f, f, f, f, f, f, f, f, f, f, f, f, f, f, f, f, f, f, f, f, t, t, t, t, f, f,
-                f, t, f, f, f, f, t, f, f, f, f, f, f, f, t, f, f, f, t, t, t, t, t, f, f, t, f, f,
-                f, f, t, f, f, t, f, f, f, f, t, f, f, t, f, f, f, t, t, f, f, f, t, t, t, f, t, f,
-                f, f, f, f, f, f, f, f, f, f, f, f, f, f, f, f,
-            ]
-        );
 
-        let Bitmap {
-            width,
-            height,
-            bits,
-        } = Bitmap::from_raw_data(CJK_UNIFIED_IDEOGRAPH_5186);
+        let Bitmap { width, height, .. } = Bitmap::from_raw_data(CJK_UNIFIED_IDEOGRAPH_5186);
         assert_eq!(width, 16);
         assert_eq!(height, 16);
-        assert_eq!(
-            bits,
-            vec![
-                f, f, f, f, f, f, f, f, f, f, f, f, f, f, f, f, f, t, t, t, t, t, t, t, t, t, t, t,
-                t, t, f, f, f, t, f, f, f, f, f, t, f, f, f, f, f, t, f, f, f, t, f, f, f, f, f, t,
-                f, f, f, f, f, t, f, f, f, t, f, f, f, f, f, t, f, f, f, f, f, t, f, f, f, t, f, f,
-                f, f, f, t, f, f, f, f, f, t, f, f, f, t, f, f, f, f, f, t, f, f, f, f, f, t, f, f,
-                f, t, t, t, t, t, t, t, t, t, t, t, t, t, f, f, f, t, f, f, f, f, f, f, f, f, f, f,
-                f, t, f, f, f, t, f, f, f, f, f, f, f, f, f, f, f, t, f, f, f, t, f, f, f, f, f, f,
-                f, f, f, f, f, t, f, f, f, t, f, f, f, f, f, f, f, f, f, f, f, t, f, f, f, t, f, f,
-                f, f, f, f, f, f, f, f, f, t, f, f, f, t, f, f, f, f, f, f, f, f, f, f, f, t, f, f,
-                f, t, f, f, f, f, f, f, f, f, f, t, f, t, f, f, f, t, f, f, f, f, f, f, f, f, f, f,
-                t, f, f, f,
-            ]
-        );
     }
 }

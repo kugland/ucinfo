@@ -48,7 +48,7 @@ fn draw_simple(bitmap: &Bitmap, zero: &str, one: &str) -> String {
     for row in 0..bitmap.height {
         for col in 0..bitmap.width {
             let bit = bitmap.get_pixel(col, row);
-            result.push_str(if bit { one } else { zero });
+            result.push_str(if bit == 0 { zero } else { one });
         }
         result.push('\n');
     }
@@ -61,7 +61,9 @@ fn draw_blocks(bitmap: &Bitmap) -> String {
     let mut result = String::new();
     for y in (0..bitmap.height).step_by(2) {
         for x in 0..bitmap.width {
-            result.push(match (bitmap.get_pixel(x, y), bitmap.get_pixel(x, y + 1)) {
+            let upper = bitmap.get_pixel(x, y) != 0;
+            let lower = bitmap.get_pixel(x, y + 1) != 0;
+            result.push(match (upper, lower) {
                 (false, false) => ' ',
                 (false, true) => '▄',
                 (true, false) => '▀',
