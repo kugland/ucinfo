@@ -32,7 +32,7 @@ fn find_entry_internal<const N: usize>(
 ) -> Option<&'static [u8]> {
     let idx = font
         .binary_search_by_key(&codepoint, |record| {
-            u32::from_le_bytes(record[0..4].try_into().unwrap())
+            u32::from_ne_bytes(record[0..4].try_into().unwrap())
         })
         .ok()?;
     Some(&font[idx][4..])
@@ -43,8 +43,7 @@ pub const UNIFONT_VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/unifon
 
 // These fonts are formatted as records of either 4 + 16 or 4 + 32 bytes, the first 4 being the
 // codepoint and the rest being the bitmap data. The records are sorted by codepoint, so we can
-// use binary search to find the bitmap for a given codepoint. All values are stored in
-// little-endian format.
+// use binary search to find the bitmap for a given codepoint.
 const UNIFONT_GLYPHS_8X16: (&[[u8; 20]], &[u8]) =
     include_bytes!(concat!(env!("OUT_DIR"), "/unifont_glyphs_8x16.bin")).as_chunks::<20>();
 const UNIFONT_GLYPHS_16X16: (&[[u8; 36]], &[u8]) =

@@ -29,7 +29,7 @@ impl Glyph {
 
     /// Convert the glyph to a binary representation.
     fn append_to_vec(&self, out: &mut Vec<u8>) {
-        out.extend_from_slice(&self.0.to_le_bytes());
+        out.extend_from_slice(&self.0.to_ne_bytes());
         out.extend_from_slice(&self.1);
     }
 }
