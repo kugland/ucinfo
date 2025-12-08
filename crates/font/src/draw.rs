@@ -58,19 +58,14 @@ fn draw_simple(bitmap: Bitmap, zero: &str, one: &str) -> String {
 
 /// Draw a [Bitmap] using Unicode block elements. (' ', '▀', '▄', '█')
 fn draw_blocks(bitmap: Bitmap) -> String {
-    let lines = draw_simple(bitmap, " ", "#"); // Let's reuse the ASCII drawing code
-    let ascii = lines.lines().collect::<Vec<_>>();
     let mut result = String::new();
-    for line_pair in ascii.chunks(2) {
-        for col in 0..(line_pair[0].len()) {
-            let top_char = line_pair[0].chars().nth(col).unwrap();
-            let bottom_char = line_pair[1].chars().nth(col).unwrap();
-            result.push(match (top_char, bottom_char) {
-                (' ', ' ') => ' ',
-                (' ', '#') => '▄',
-                ('#', ' ') => '▀',
-                ('#', '#') => '█',
-                _ => unreachable!(),
+    for y in (0..bitmap.height).step_by(2) {
+        for x in 0..bitmap.width {
+            result.push(match (bitmap.get_pixel(x, y), bitmap.get_pixel(x, y + 1)) {
+                (false, false) => ' ',
+                (false, true) => '▄',
+                (true, false) => '▀',
+                (true, true) => '█',
             });
         }
         result.push('\n');
