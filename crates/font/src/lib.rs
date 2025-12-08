@@ -30,7 +30,7 @@ use crate::{bitmap::Bitmap, draw::draw, unifont::find_entry};
 
 /// Draw the glyph for the specified codepoint, in the specified mode.
 pub fn draw_glyph(codepoint: u32, mode: DrawingMode) -> Option<String> {
-    find_entry(codepoint).map(|raw| draw(mode, Bitmap::from_raw_data(raw)))
+    find_entry(codepoint).map(|raw| draw(mode, &Bitmap::from_raw_data(raw)))
 }
 
 #[cfg(test)]

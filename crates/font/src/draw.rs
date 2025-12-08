@@ -32,7 +32,7 @@ pub enum DrawingMode {
 }
 
 /// Draw a [Bitmap] using the specified drawing mode.
-pub(crate) fn draw(mode: DrawingMode, bitmap: Bitmap) -> String {
+pub(crate) fn draw(mode: DrawingMode, bitmap: &Bitmap) -> String {
     use DrawingMode::*;
     match mode {
         Simple(ch) => draw_simple(bitmap, " ", &ch.to_string()),
@@ -43,7 +43,7 @@ pub(crate) fn draw(mode: DrawingMode, bitmap: Bitmap) -> String {
 }
 
 /// Draw [Bitmap] using the given strings for zero and one bits.
-fn draw_simple(bitmap: Bitmap, zero: &str, one: &str) -> String {
+fn draw_simple(bitmap: &Bitmap, zero: &str, one: &str) -> String {
     let mut result = String::new();
     for row in 0..bitmap.height {
         for col in 0..bitmap.width {
@@ -57,7 +57,7 @@ fn draw_simple(bitmap: Bitmap, zero: &str, one: &str) -> String {
 }
 
 /// Draw a [Bitmap] using Unicode block elements. (' ', '▀', '▄', '█')
-fn draw_blocks(bitmap: Bitmap) -> String {
+fn draw_blocks(bitmap: &Bitmap) -> String {
     let mut result = String::new();
     for y in (0..bitmap.height).step_by(2) {
         for x in 0..bitmap.width {
@@ -84,14 +84,14 @@ mod tests {
         assert_eq!(
             draw(
                 DrawingMode::Simple('#'),
-                Bitmap::from_raw_data(LATIN_SMALL_LETTER_A)
+                &Bitmap::from_raw_data(LATIN_SMALL_LETTER_A)
             ),
             DRAWING_SIMPLE_LATIN_SMALL_LETTER_A.replace('_', " ")
         );
         assert_eq!(
             draw(
                 DrawingMode::Simple('#'),
-                Bitmap::from_raw_data(CJK_UNIFIED_IDEOGRAPH_5186)
+                &Bitmap::from_raw_data(CJK_UNIFIED_IDEOGRAPH_5186)
             ),
             DRAWING_SIMPLE_CJK_UNIFIED_IDEOGRAPH_5186.replace('_', " "),
         );
@@ -102,7 +102,7 @@ mod tests {
         assert_eq!(
             draw(
                 DrawingMode::Wide('#'),
-                Bitmap::from_raw_data(LATIN_SMALL_LETTER_A)
+                &Bitmap::from_raw_data(LATIN_SMALL_LETTER_A)
             ),
             DRAWING_SIMPLE_LATIN_SMALL_LETTER_A
                 .replace('#', "##")
@@ -111,7 +111,7 @@ mod tests {
         assert_eq!(
             draw(
                 DrawingMode::Wide('#'),
-                Bitmap::from_raw_data(CJK_UNIFIED_IDEOGRAPH_5186)
+                &Bitmap::from_raw_data(CJK_UNIFIED_IDEOGRAPH_5186)
             ),
             DRAWING_SIMPLE_CJK_UNIFIED_IDEOGRAPH_5186
                 .replace('#', "##")
@@ -124,7 +124,7 @@ mod tests {
         assert_eq!(
             draw(
                 DrawingMode::Blocks,
-                Bitmap::from_raw_data(LATIN_SMALL_LETTER_A)
+                &Bitmap::from_raw_data(LATIN_SMALL_LETTER_A)
             ),
             DRAWING_BLOCKS_LATIN_SMALL_LETTER_A.replace('_', " "),
         );
@@ -132,7 +132,7 @@ mod tests {
         assert_eq!(
             draw(
                 DrawingMode::Blocks,
-                Bitmap::from_raw_data(CJK_UNIFIED_IDEOGRAPH_5186)
+                &Bitmap::from_raw_data(CJK_UNIFIED_IDEOGRAPH_5186)
             ),
             DRAWING_BLOCKS_CJK_UNIFIED_IDEOGRAPH_5186.replace('_', " "),
         );
@@ -143,7 +143,7 @@ mod tests {
         assert_eq!(
             draw(
                 DrawingMode::WideBlocks,
-                Bitmap::from_raw_data(LATIN_SMALL_LETTER_A)
+                &Bitmap::from_raw_data(LATIN_SMALL_LETTER_A)
             ),
             DRAWING_SIMPLE_LATIN_SMALL_LETTER_A
                 .replace('#', "██")
@@ -152,7 +152,7 @@ mod tests {
         assert_eq!(
             draw(
                 DrawingMode::WideBlocks,
-                Bitmap::from_raw_data(CJK_UNIFIED_IDEOGRAPH_5186)
+                &Bitmap::from_raw_data(CJK_UNIFIED_IDEOGRAPH_5186)
             ),
             DRAWING_SIMPLE_CJK_UNIFIED_IDEOGRAPH_5186
                 .replace('#', "██")
