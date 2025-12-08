@@ -39,15 +39,15 @@ fn find_entry_internal<const N: usize>(
 }
 
 /// Version of the included Unifont font.
-pub const UNIFONT_VERSION: &str = include_str!(concat!(env!("OUT_DIR"), "/unifont_version.txt"));
+pub const UNIFONT_VERSION: &str = include_str!(env!("UNIFONT_VERSION_FILE"));
 
 // These fonts are formatted as records of either 4 + 16 or 4 + 32 bytes, the first 4 being the
 // codepoint and the rest being the bitmap data. The records are sorted by codepoint, so we can
 // use binary search to find the bitmap for a given codepoint.
 const UNIFONT_GLYPHS_8X16: (&[[u8; 20]], &[u8]) =
-    include_bytes!(concat!(env!("OUT_DIR"), "/unifont_glyphs_8x16.bin")).as_chunks::<20>();
+    include_bytes!(env!("UNIFONT_GLYPHS_8X16_FILE")).as_chunks::<20>();
 const UNIFONT_GLYPHS_16X16: (&[[u8; 36]], &[u8]) =
-    include_bytes!(concat!(env!("OUT_DIR"), "/unifont_glyphs_16x16.bin")).as_chunks::<36>();
+    include_bytes!(env!("UNIFONT_GLYPHS_16X16_FILE")).as_chunks::<36>();
 
 #[cfg(test)]
 mod tests {

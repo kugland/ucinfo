@@ -35,21 +35,13 @@ impl Glyph {
 }
 
 /// Load all glyphs from the `fonts` directory into a vector, sorted by codepoint.
-fn load_font() -> anyhow::Result<(String, Vec<Glyph>)> {
-    let font_dir = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("..")
-        .join("..")
-        .join("data")
-        .join("unifont");
-
-    if !font_dir.exists() {
-        return Err(anyhow!("Font directory does not exist: {:?}", font_dir));
-    }
-
+fn load_font(
+    metadata_file: &Path,
+    unifont_hex_file: &Path,
+) -> anyhow::Result<(String, Vec<Glyph>)> {
     let version = {
         // Load metadata to get version
-        let metadata = font_dir.join("metadata.json");
-        let contents = fs::read_to_string(metadata.as_path())?;
+        let contents = fs::read_to_string(metadata_file)?;
         let metadata: serde_json::Value = serde_json::from_str(&contents)?;
         metadata["version"]
             .as_str()
@@ -59,8 +51,7 @@ fn load_font() -> anyhow::Result<(String, Vec<Glyph>)> {
 
     // Load glyphs from unifont.hex
     let all_glyphs = {
-        let font_file = font_dir.join("unifont.hex");
-        let contents = fs::read_to_string(font_file.as_path())?;
+        let contents = fs::read_to_string(unifont_hex_file)?;
         let mut all_glyphs = contents
             .lines()
             .enumerate()
@@ -78,36 +69,58 @@ fn save_unifont_glyphs_bin<P: AsRef<Path>>(
     glyphs: &[Glyph],
     width: u8,
     filename: P,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<String> {
     let mut data = Vec::new();
     let binding = env::var_os("OUT_DIR").unwrap();
-    let out_dir = path::Path::new(&binding);
+    let out_file = Path::new(&binding).join(filename.as_ref());
 
     for glyph in glyphs.iter().filter(|g| g.width() == width) {
         glyph.append_to_vec(&mut data);
     }
 
-    fs::write(out_dir.join(filename), &data)?;
-    Ok(())
+    fs::write(&out_file, &data)?;
+
+    Ok(out_file.to_string_lossy().to_string())
 }
 
 /// Save the Unifont version to a text file.
-fn save_unifont_version(version: &str) -> anyhow::Result<()> {
+fn save_unifont_version(version: &str) -> anyhow::Result<String> {
     let binding = env::var_os("OUT_DIR").unwrap();
-    let out_dir = path::Path::new(&binding);
-    fs::write(out_dir.join("unifont_version.txt"), version)?;
-    Ok(())
+    let out_file = path::Path::new(&binding).join("unifont_version.txt");
+    fs::write(&out_file, version)?;
+    Ok(out_file.to_string_lossy().to_string())
 }
 
 fn main() -> anyhow::Result<()> {
-    let (version, all_glyphs) = load_font()?;
+    let data_dir = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .join("data")
+        .join("unifont");
 
-    save_unifont_version(&version)?;
-    save_unifont_glyphs_bin(&all_glyphs, 8, "unifont_glyphs_8x16.bin")?;
-    save_unifont_glyphs_bin(&all_glyphs, 16, "unifont_glyphs_16x16.bin")?;
+    if !data_dir.exists() {
+        return Err(anyhow::anyhow!(
+            "Data directory does not exist: {}",
+            data_dir.display()
+        ));
+    }
 
-    println!("cargo:rerun-if-changed=../../data/unifont/metadata.json");
-    println!("cargo:rerun-if-changed=../../data/unifont/unifont.hex");
+    let metadata_file = data_dir.join("metadata.json");
+    let unifont_hex_file = data_dir.join("unifont.hex");
+
+    let (version, all_glyphs) = load_font(&metadata_file, &unifont_hex_file)?;
+
+    let version_file = save_unifont_version(&version)?;
+    let glyphs_8x16_file = save_unifont_glyphs_bin(&all_glyphs, 8, "unifont_glyphs_8x16.bin")?;
+    let glyphs_16x16_file = save_unifont_glyphs_bin(&all_glyphs, 16, "unifont_glyphs_16x16.bin")?;
+
+    println!("cargo:rerun-if-changed={}", metadata_file.display());
+    println!("cargo:rerun-if-changed={}", unifont_hex_file.display());
+    println!("cargo:rustc-env=UNIFONT_VERSION_FILE={version_file}");
+    println!("cargo:rustc-env=UNIFONT_GLYPHS_8X16_FILE={glyphs_8x16_file}");
+    println!("cargo:rustc-env=UNIFONT_GLYPHS_16X16_FILE={glyphs_16x16_file}");
 
     Ok(())
 }
