@@ -1,0 +1,16 @@
+[package]
+name = "unicodedata"
+authors.workspace = true
+description.workspace = true
+homepage.workspace = true
+repository.workspace = true
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+quick-xml = { version = "0.38.4", features = ["overlapped-lists", "serde", "serialize"] }
+anyhow.workspace = true
+serde.workspace = true
+bincode = "2.0.1"

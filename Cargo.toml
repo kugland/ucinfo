@@ -1,6 +1,7 @@
 [workspace]
 members = [
-    "crates/font"
+    "crates/font",
+    "crates/unicodedata-build"
 ]
 resolver = "2"
 

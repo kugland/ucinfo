@@ -12,14 +12,14 @@ impl Glyph {
     /// and `YY...YY` is a sequence of hexadecimal digits representing the raw bitmap data.
     fn from_line(line_number: usize, line: &str) -> anyhow::Result<Self> {
         let error = || anyhow::anyhow!("Invalid line: {line_number}: {line}");
-        let (code, data) = line.split_once(':').ok_or_else(error)?;
-        let code = u32::from_str_radix(code, 16)?;
-        let mut out: Vec<u8> = vec![0; data.len() / 2];
-        hex::decode_to_slice(data, &mut out).map_err(|_| error())?;
-        if out.len() != 16 && out.len() != 32 {
+        let (codepoint, data) = line.split_once(':').ok_or_else(error)?;
+        let codepoint = u32::from_str_radix(codepoint, 16).map_err(|_| error())?;
+        let mut bitmap: Vec<u8> = vec![0; data.len() / 2];
+        hex::decode_to_slice(data, &mut bitmap).map_err(|_| error())?;
+        if bitmap.len() != 16 && bitmap.len() != 32 {
             return Err(error());
         }
-        Ok(Self(code, out))
+        Ok(Self(codepoint, bitmap))
     }
 
     /// Calculate the width of the glyph in pixels, assuming a height of 16 pixels.
@@ -32,6 +32,11 @@ impl Glyph {
         out.extend_from_slice(&self.0.to_ne_bytes());
         out.extend_from_slice(&self.1);
     }
+}
+
+fn output_file_path<P: AsRef<Path>>(filename: P) -> anyhow::Result<path::PathBuf> {
+    let binding = env::var_os("OUT_DIR").ok_or_else(|| anyhow!("OUT_DIR not set"))?;
+    Ok(path::Path::new(&binding).join(filename))
 }
 
 /// Load all glyphs from the `fonts` directory into a vector, sorted by codepoint.
@@ -71,24 +76,22 @@ fn save_unifont_glyphs_bin<P: AsRef<Path>>(
     filename: P,
 ) -> anyhow::Result<String> {
     let mut data = Vec::new();
-    let binding = env::var_os("OUT_DIR").unwrap();
-    let out_file = Path::new(&binding).join(filename.as_ref());
+    let font_file = output_file_path(filename)?;
 
     for glyph in glyphs.iter().filter(|g| g.width() == width) {
         glyph.append_to_vec(&mut data);
     }
 
-    fs::write(&out_file, &data)?;
+    fs::write(&font_file, &data)?;
 
-    Ok(out_file.to_string_lossy().to_string())
+    Ok(font_file.to_string_lossy().to_string())
 }
 
 /// Save the Unifont version to a text file.
 fn save_unifont_version(version: &str) -> anyhow::Result<String> {
-    let binding = env::var_os("OUT_DIR").unwrap();
-    let out_file = path::Path::new(&binding).join("unifont_version.txt");
-    fs::write(&out_file, version)?;
-    Ok(out_file.to_string_lossy().to_string())
+    let version_file = output_file_path("unifont_version.txt")?;
+    fs::write(&version_file, version)?;
+    Ok(version_file.to_string_lossy().to_string())
 }
 
 fn main() -> anyhow::Result<()> {
