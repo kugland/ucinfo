@@ -1,0 +1,20 @@
+[package]
+name = "htmlentities"
+authors.workspace = true
+description.workspace = true
+homepage.workspace = true
+repository.workspace = true
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[build-dependencies]
+anyhow.workspace = true
+bincode.workspace = true
+serde_json.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+bincode.workspace = true
+lazy_static.workspace = true
