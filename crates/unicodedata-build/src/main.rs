@@ -97,7 +97,9 @@ fn process_repertoire(reader: &mut Reader<BufReader<File>>) -> Result<Vec<Repert
                             match key.as_str() {
                                 "alias" => alias = value,
                                 "type" => type_ = value,
-                                _ => {}
+                                _ => {
+                                    bail!("Unexpected attribute '{}' in name-alias", key);
+                                }
                             }
                         }
                         item.name_aliases.push(NameAlias { alias, type_ });
